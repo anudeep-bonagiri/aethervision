@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AetherVision // Local AI Vision Workbench</title>
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fa-solid fa-wand-magic-sparkles brand-icon"></i>
+                <div class="brand-text">
+                    <h1>AETHERVISION</h1>
+                    <span>Local AI Vision Agent</span>
+                </div>
+            </div>
+
+            <!-- Model Selection Tabs -->
+            <div class="menu-section">
+                <h2>Vision Engine Modality</h2>
+                <nav class="nav-tabs">
+                    <button class="nav-tab active" data-modality="florence">
+                        <i class="fa-solid fa-eye"></i> Florence-2 Tasks
+                    </button>
+                    <button class="nav-tab" data-modality="depth">
+                        <i class="fa-solid fa-layer-group"></i> Depth Estimation
+                    </button>
+                    <button class="nav-tab" data-modality="clip">
+                        <i class="fa-solid fa-magnifying-glass"></i> CLIP Classification
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Context Parameters Panel -->
+            <div class="parameters-panel">
+                <h2>Parameters</h2>
+                
+                <!-- Florence Options -->
+                <div id="params-florence" class="modality-params active">
+                    <div class="param-group">
+                        <label for="florence-task">Task Type</label>
+                        <select id="florence-task" class="form-input">
+                            <option value="<CAPTION>">Image Captioning</option>
+                            <option value="<DETAILED_CAPTION>">Detailed Captioning</option>
+                            <option value="<MORE_DETAILED_CAPTION>">More Detailed Captioning</option>
+                            <option value="<OD>">Object Detection</option>
+                            <option value="<DENSE_REGION_CAPTION>">Dense Region Captioning</option>
+                            <option value="<OCR>">OCR (Text Extraction)</option>
+                            <option value="<OCR_WITH_REGION>">OCR with Region Map</option>
+                            <option value="<REFERRING_EXPRESSION_SEGMENTATION>">Referring Expression Segmentation</option>
+                        </select>
+                    </div>
+                    <div class="param-group" id="ref-exp-group" style="display: none;">
+                        <label for="florence-text">Expression Target</label>
+                        <input type="text" id="florence-text" class="form-input" placeholder="e.g. 'the green mug' or 'the dog on left'">
+                    </div>
+                </div>
+
+                <!-- Depth Options -->
+                <div id="params-depth" class="modality-params">
+                    <p class="param-desc">Depth Anything V2 computes dense depth estimation per pixel. Uses INFERNO colormap for depth visualization (brighter colors correspond to closer objects).</p>
+                </div>
+
+                <!-- CLIP Options -->
+                <div id="params-clip" class="modality-params">
+                    <div class="param-group">
+                        <label for="clip-candidates">Similarity Labels (comma-separated)</label>
+                        <textarea id="clip-candidates" class="form-input" rows="4" placeholder="e.g. a red sports car, a scenic landscape, a golden retriever, food on a plate"></textarea>
+                    </div>
+                </div>
+                
+                <button id="btn-run" class="btn-primary" disabled>
+                    <i class="fa-solid fa-play"></i> Run Inference
+                </button>
+            </div>
+            
+            <!-- System Stats Monitor -->
+            <div class="stats-panel">
+                <h2>Device Diagnostics</h2>
+                <div class="stat-row">
+                    <span class="stat-label">Inference Engine:</span>
+                    <span class="stat-value text-glow">PyTorch MPS (Metal)</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Latency:</span>
+                    <span id="stat-latency" class="stat-value">-- ms</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Viewport Section -->
+        <main class="main-content">
+            <!-- Header bar -->
+            <header class="app-header">
+                <div class="header-status">
+                    <span class="status-dot online"></span>
+                    <span>Local Model Server Active // localhost:8000</span>
+                </div>
+                <div class="header-actions">
+                    <button id="btn-webcam" class="header-btn" style="cursor: pointer;">
+                        <i class="fa-solid fa-video"></i> Start Live Feed
+                    </button>
+                    <a href="https://github.com/anudeep-bonagiri" target="_blank" class="header-btn">
+                        <i class="fa-brands fa-github"></i> Source Code
+                    </a>
+                </div>
+            </header>
+
+            <!-- Working Viewport -->
+            <section class="viewport-card">
+                <!-- Dropzone / Canvas Container -->
+                <div id="drop-zone" class="drop-zone">
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                    <video id="webcam-video" autoplay playsinline style="display: none;"></video>
+                    <div class="drop-prompt">
+                        <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                        <h3>Drag & drop an image here</h3>
+                        <p>Supports PNG, JPEG, WEBP files</p>
+                        <span>or click to browse local files</span>
+                    </div>
+                    
+                    <div id="canvas-container" class="canvas-container" style="display: none;">
+                        <canvas id="image-canvas"></canvas>
+                        <!-- Visual Depth Overlay -->
+                        <div id="depth-overlay" class="depth-overlay" style="display: none;">
+                            <img id="depth-img" alt="Depth map representation">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Execution Outputs Console -->
+            <section class="console-card">
+                <div class="console-header">
+                    <div class="console-tabs">
+                        <button class="console-tab active" data-console="verdict">
+                            <i class="fa-solid fa-list-check"></i> Analysis Result
+                        </button>
+                        <button class="console-tab" data-console="raw">
+                            <i class="fa-solid fa-code"></i> Raw response
+                        </button>
+                    </div>
+                    <button id="btn-clear" class="console-action-btn">
+                        <i class="fa-solid fa-trash-can"></i> Clear
+                    </button>
+                </div>
+
+                <div class="console-body">
+                    <!-- Structured Result Outputs -->
+                    <div id="console-verdict" class="console-content active">
+                        <div class="placeholder-message">
+                            <i class="fa-solid fa-terminal"></i>
+                            <p>Upload an image and press "Run Inference" to inspect predictions.</p>
+                        </div>
+                    </div>
+
+                    <!-- Code highlighting console output -->
+                    <div id="console-raw" class="console-content">
+                        <pre><code id="raw-json-output">{ "status": "awaiting_input" }</code></pre>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Application Script -->
+    <script src="app.js"></script>
+</body>
+</html>

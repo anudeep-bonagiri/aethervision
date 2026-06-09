@@ -1,0 +1,9 @@
+transformers>=4.41.0
+fastapi>=0.110.0
+uvicorn[standard]>=0.28.0
+timm>=0.9.16
+einops>=0.7.0
+pillow>=10.2.0
+opencv-python>=4.9.0
+python-multipart>=0.0.9
+huggingface_hub>=0.22.0
