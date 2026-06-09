@@ -1,5 +1,9 @@
 # AetherVision 🪐
 
+<p align="center">
+  <img src="assets/aethervision_mockup.png" alt="AetherVision Mockup Interface" width="600" style="border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0,0,0,0.5);" />
+</p>
+
 AetherVision is a local, high-performance, open-source computer vision agent workbench and library. It is designed to run state-of-the-art vision models locally on consumer hardware, with dedicated support for **Apple Silicon GPU (Metal Performance Shaders / MPS)** acceleration.
 
 AetherVision exposes a unified vision inference server and features a premium, interactive glassmorphic web dashboard to visually explore object detection, segmentations, dense region descriptions, optical character recognition (OCR), depth estimation, and CLIP similarity comparison.
