@@ -1,13 +1,14 @@
 import os
 import sys
 import time
+
 import requests
 from PIL import Image
-import torch
 
 # Ensure the parent directory is in the path so we can import backend
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from backend.engine import VisionEngine
+
 
 def print_telemetry_header():
     banner = """
@@ -23,7 +24,7 @@ def main():
     
     # 1. Download a test road/traffic image
     image_url = "https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/transformers/tasks/car.jpg"
-    print(f"[Cruze Telemetry] Downloading road test frame from Hugging Face...")
+    print("[Cruze Telemetry] Downloading road test frame from Hugging Face...")
     try:
         response = requests.get(image_url, stream=True)
         response.raise_for_status()
@@ -51,7 +52,7 @@ def main():
     print("\n------------------ DETECTED ROAD OBJECTS ------------------")
     for idx, (box, label) in enumerate(zip(bboxes, labels)):
         print(f" 🚘 [ID {idx:02d}] Type: {label:<10} | Coordinates (px): x=[{box[0]}, {box[2]}], y=[{box[1]}, {box[3]}]")
-    print(f"----------------------------------------------------------")
+    print("----------------------------------------------------------")
     print(f"Perception latency (Florence-2): {latency_od:.2f} seconds.")
 
     # 4. Modality 2: Proximity & Depth Estimation (Depth Anything V2)
@@ -70,7 +71,7 @@ def main():
          print(" ⚠️  [WARNING] OBSTACLE PROXIMITY IN CRITICAL RANGE - COLLISION RISK")
     else:
          print(" ✅ [SAFE] Obstacle clearance in safe driving envelope")
-    print(f"---------------------------------------------------------")
+    print("---------------------------------------------------------")
     print(f"Range finder latency (Depth Anything V2): {latency_depth:.2f} seconds.")
 
     # 5. Modality 3: Scenario & Hazard Classification (CLIP)
@@ -93,7 +94,7 @@ def main():
         prob_percent = match['probability'] * 100
         icon = "🎯" if idx == 0 else "🔹"
         print(f" {icon} Match #{idx+1}: {match['label']:<40} | Confidence: {prob_percent:.2f}%")
-    print(f"-------------------------------------------------------")
+    print("-------------------------------------------------------")
     print(f"Scene classification latency (CLIP): {latency_clip:.2f} seconds.")
     
     print(f"\n[Cruze Telemetry] Total Pipeline Latency: {latency_od + latency_depth + latency_clip:.2f}s")

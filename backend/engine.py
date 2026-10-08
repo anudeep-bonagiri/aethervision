@@ -1,19 +1,19 @@
-import os
-import io
 import base64
 import time
-import torch
-import numpy as np
+
 import cv2
+import numpy as np
+import torch
 from PIL import Image
 from transformers import (
-    AutoProcessor, 
-    AutoModelForCausalLM, 
-    AutoImageProcessor, 
+    AutoImageProcessor,
+    AutoModelForCausalLM,
     AutoModelForDepthEstimation,
+    AutoProcessor,
+    CLIPModel,
     CLIPProcessor,
-    CLIPModel
 )
+
 
 class VisionEngine:
     def __init__(self):
@@ -77,7 +77,7 @@ class VisionEngine:
             print(f"[AetherVision] CLIP loaded in {time.time() - start:.2f} seconds.")
         return self._clip_model, self._clip_processor
 
-    def run_florence_task(self, image: Image.Image, task_prompt: str, text_input: str = None) -> dict:
+    def run_florence_task(self, image: Image.Image, task_prompt: str, text_input: str | None = None) -> dict:
         """
         Runs a Florence-2 task on the input image.
         Common tasks: 

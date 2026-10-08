@@ -1,10 +1,11 @@
-import os
 import io
+import os
 import traceback
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import HTMLResponse, FileResponse
 from PIL import Image
 
 from backend.engine import VisionEngine
@@ -35,7 +36,7 @@ def load_uploaded_image(file: UploadFile) -> Image.Image:
         image = Image.open(io.BytesIO(contents)).convert("RGB")
         return image
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid image file: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid image file: {e!s}")
 
 # Endpoints
 @app.post("/api/analyze")
@@ -53,7 +54,7 @@ async def analyze_image(
         return result
     except Exception as e:
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Florence-2 execution error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Florence-2 execution error: {e!s}")
 
 @app.post("/api/depth")
 async def get_depth_map(file: UploadFile = File(...)):
@@ -66,7 +67,7 @@ async def get_depth_map(file: UploadFile = File(...)):
         return result
     except Exception as e:
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Depth Anything execution error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Depth Anything execution error: {e!s}")
 
 @app.post("/api/similarity")
 async def get_similarity(
@@ -88,18 +89,19 @@ async def get_similarity(
         return result
     except Exception as e:
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"CLIP execution error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"CLIP execution error: {e!s}")
 
 import base64
+
 from pydantic import BaseModel
-from typing import Optional
+
 
 class StreamRequest(BaseModel):
     image: str  # base64 string
     modality: str  # "florence", "depth", "clip"
-    task: Optional[str] = None
-    text_input: Optional[str] = None
-    candidates: Optional[str] = None
+    task: str | None = None
+    text_input: str | None = None
+    candidates: str | None = None
 
 def decode_base64_image(base64_str: str) -> Image.Image:
     try:
@@ -108,7 +110,7 @@ def decode_base64_image(base64_str: str) -> Image.Image:
         image_data = base64.b64decode(base64_str)
         return Image.open(io.BytesIO(image_data)).convert("RGB")
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid base64 image: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid base64 image: {e!s}")
 
 @app.post("/api/stream")
 async def stream_inference(req: StreamRequest):
@@ -135,7 +137,7 @@ async def stream_inference(req: StreamRequest):
             raise HTTPException(status_code=400, detail=f"Invalid modality: {req.modality}")
     except Exception as e:
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Streaming inference error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Streaming inference error: {e!s}")
 
 # Serve frontend directory
 frontend_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")

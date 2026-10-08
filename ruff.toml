@@ -1,0 +1,18 @@
+# Ruff configuration for AetherVision.
+# Keeps Ruff's default rule set; adds project-aware carve-outs below.
+
+[lint.flake8-bugbear]
+# FastAPI's dependency-injection markers are called in argument defaults by
+# design (File(...), Form(...), Depends(...)). Treat them as immutable so B008
+# does not flag the intended FastAPI pattern.
+extend-immutable-calls = [
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Depends",
+]
+
+[lint.per-file-ignores]
+# The API endpoints and the demo script intentionally catch broad exceptions to
+# convert any backend/model failure into a clean error response or message.
+"backend/app.py" = ["BLE001"]
+"examples/cruze_perception.py" = ["BLE001"]
